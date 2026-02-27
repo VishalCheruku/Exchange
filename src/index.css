@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --xchange-ink: #0b1113;
+    --xchange-accent: #00d1b2;
+    --xchange-sky: #0ea5e9;
+    --xchange-ember: #f97316;
+    --xchange-snow: #f8fafc;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Manrope', sans-serif;
+    background: radial-gradient(circle at top, #e0fbf6 0%, #f8fafc 45%, #ffffff 100%);
+    color: var(--xchange-ink);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  .xchange-hero {
+    background: linear-gradient(135deg, rgba(0, 209, 178, 0.12), rgba(14, 165, 233, 0.08));
+    border-radius: 24px;
+    padding: 2.5rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.08);
+  }
+
+  .hero-panel {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .hero-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 18px;
+    padding: 1.5rem;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 60%);
+    z-index: 0;
+  }
+
+  .hero-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .xchange-btn {
+    background: var(--xchange-ink);
+    color: white;
+    padding: 0.75rem 1.4rem;
+    border-radius: 999px;
+    font-weight: 600;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+  }
+
+  .xchange-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .xchange-btn.ghost {
+    background: white;
+    color: var(--xchange-ink);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: none;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .stat-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #64748b;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--xchange-ink);
+  }
+
+  .chip {
+    background: rgba(15, 23, 42, 0.06);
+    color: #1f2937;
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 200ms ease;
+  }
+
+  .chip-active {
+    background: var(--xchange-ink);
+    color: white;
+  }
+
+  .filter-bar {
+    margin-top: -1.5rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 18px;
+    padding: 1.2rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+  }
+
+  .filter-controls {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    align-items: end;
+  }
+
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #64748b;
+  }
+
+  .control input,
+  .control select {
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    font-size: 0.9rem;
+    color: #0f172a;
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .view-toggle button {
+    flex: 1;
+    padding: 0.5rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .view-toggle button.active {
+    background: var(--xchange-ink);
+    color: white;
+  }
+
+  .favorite-toggle {
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    font-weight: 600;
+    color: #0f172a;
+    background: white;
+    transition: all 200ms ease;
+  }
+
+  .favorite-toggle.active {
+    background: var(--xchange-accent);
+    color: #0b1113;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .section-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+  }
+
+  .hover-card {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .hover-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  }
+
+  .empty-state {
+    margin-top: 1rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    border: 1px dashed rgba(15, 23, 42, 0.15);
+    text-align: center;
+    color: #64748b;
+  }
+
+  .detail-card {
+    background: white;
+    border-radius: 14px;
+    padding: 0.9rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .detail-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #94a3b8;
+  }
+
+  .detail-value {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .safety-card {
+    padding: 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(14, 165, 233, 0.08);
+  }
+
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--xchange-ember);
+    box-shadow: 0 0 0 rgba(249, 115, 22, 0.6);
+    animation: pulse 2s infinite;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(249, 115, 22, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+}
+
+.fill-x {
+  background: linear-gradient(135deg, #0f172a, #0ea5e9);
+  transform-origin: left;
+  animation: fill-x 1.6s ease-in-out infinite;
+}
+
+@keyframes fill-x {
+  0% { transform: scaleX(0); opacity: 0.3; }
+  50% { transform: scaleX(0.65); opacity: 0.8; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
