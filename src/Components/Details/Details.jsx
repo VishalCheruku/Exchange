@@ -7,7 +7,7 @@ import Sell from "../Modal/Sell";
 import Card from "../Card/Card";
 import { auth, fireStore } from "../Firebase/Firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { addDoc, collection, doc, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc, where, setDoc } from "firebase/firestore";
 import ChatModal from "../Chat/ChatModal";
 
 const Details = () => {
@@ -23,8 +23,19 @@ const Details = () => {
   const [reviewText, setReviewText] = useState('')
   const [rating, setRating] = useState(5)
   const [openChat, setOpenChat] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [currentTitle, setCurrentTitle] = useState(item?.title || '')
+  const [currentCategory, setCurrentCategory] = useState(item?.category || '')
+  const [currentPrice, setCurrentPrice] = useState(item?.price || '')
+  const [currentDescription, setCurrentDescription] = useState(item?.description || '')
+  const [editTitle, setEditTitle] = useState(item?.title || '')
+  const [editCategory, setEditCategory] = useState(item?.category || '')
+  const [editPrice, setEditPrice] = useState(item?.price || '')
+  const [editDescription, setEditDescription] = useState(item?.description || '')
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const itemsCtx= ItemsContext();
   const [user] = useAuthState(auth)
+  const isOwner = user && item?.userId && user.uid === item.userId
 
   const toggleModal = () => setModal(!openModal);
   const toggleModalSell = () => setModalSell(!openModalSell);
@@ -35,6 +46,17 @@ const Details = () => {
     const stored = JSON.parse(localStorage.getItem('xchange_favorites') || '[]')
     setSaved(Array.isArray(stored) ? stored.includes(item.id) : false)
   }, [item?.id])
+
+  useEffect(() => {
+    setCurrentTitle(item?.title || '')
+    setCurrentCategory(item?.category || '')
+    setCurrentPrice(item?.price || '')
+    setCurrentDescription(item?.description || '')
+    setEditTitle(item?.title || '')
+    setEditCategory(item?.category || '')
+    setEditPrice(item?.price || '')
+    setEditDescription(item?.description || '')
+  }, [item])
 
   useEffect(() => {
     if (!item?.id) return
@@ -59,15 +81,16 @@ const Details = () => {
   }, [item?.userId])
 
   const handleSave = () => {
-    if (!item?.id) return
+    const currentId = item?.id
+    if (!currentId) return
     const stored = JSON.parse(localStorage.getItem('xchange_favorites') || '[]')
     const list = Array.isArray(stored) ? stored : []
     let next = list
-    if (list.includes(item.id)) {
-      next = list.filter((id) => id !== item.id)
+    if (list.includes(currentId)) {
+      next = list.filter((id) => id !== currentId)
       setSaved(false)
     } else {
-      next = [item.id, ...list].slice(0, 50)
+      next = [currentId, ...list].slice(0, 50)
       setSaved(true)
     }
     localStorage.setItem('xchange_favorites', JSON.stringify(next))
@@ -77,9 +100,9 @@ const Details = () => {
     const items = itemsCtx.items || []
     if (!item?.id) return []
     return items
-      .filter((entry) => entry.id !== item.id && entry.category === item.category)
+      .filter((entry) => entry.id !== item.id && entry.category === (currentCategory || item.category))
       .slice(0, 4)
-  }, [itemsCtx.items, item?.id, item?.category])
+  }, [itemsCtx.items, item?.id, item?.category, currentCategory])
 
   const sendOffer = async () => {
     if (!user) { toggleModal(); return }
@@ -133,6 +156,29 @@ const Details = () => {
     ? (reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1)
     : null
 
+  const saveEdits = async () => {
+    if (!isOwner || !item?.id) return
+    const payload = {
+      title: editTitle,
+      category: editCategory,
+      price: editPrice,
+      description: editDescription,
+    }
+    try {
+      await setDoc(doc(fireStore, 'products', item.id), payload, { merge: true })
+      itemsCtx.setItems((prev) => (prev || []).map((it) => it.id === item.id ? { ...it, ...payload } : it))
+      setCurrentTitle(editTitle)
+      setCurrentCategory(editCategory)
+      setCurrentPrice(editPrice)
+      setCurrentDescription(editDescription)
+      setIsEditing(false)
+      alert('Saved changes to Firebase.')
+    } catch (err) {
+      console.error(err)
+      alert('Failed to save changes: ' + (err?.message || 'Unknown error'))
+    }
+  }
+
   return (
       <div>
           <Navbar toggleModalSell={toggleModalSell} toggleModal={toggleModal} />
@@ -143,19 +189,50 @@ const Details = () => {
                   <img className="object-cover w-full" src={item?.imageUrl} alt={item?.title} />
               </div>
               <div className="flex flex-col relative w-full">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="p-1 pl-0 text-2xl font-bold text-slate-900">Rs {item?.price}</p>
-                      <p className="p-1 pl-0 text-base text-slate-500">{item?.category}</p>
-                      <p className="p-1 pl-0 text-xl font-bold text-slate-900">{item?.title}</p>
+                      <p className="p-1 pl-0 text-2xl font-bold text-slate-900">Rs {isEditing ? editPrice : currentPrice}</p>
+                      <p className="p-1 pl-0 text-base text-slate-500">{isEditing ? editCategory : currentCategory}</p>
+                      <p className="p-1 pl-0 text-xl font-bold text-slate-900">{isEditing ? editTitle : currentTitle}</p>
                     </div>
-                    <button onClick={handleSave} className={`favorite-toggle ${saved ? 'active' : ''}`}>
-                      {saved ? 'Saved' : 'Save'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={handleSave} className={`favorite-toggle ${saved ? 'active' : ''}`}>
+                        {saved ? 'Favourited' : 'Favourite'}
+                      </button>
+                      {isOwner ? (
+                        <button
+                          onClick={() => setIsEditing((prev) => !prev)}
+                          className="favorite-toggle"
+                        >
+                          {isEditing ? 'Cancel edit' : 'Edit'}
+                        </button>
+                      ) : null}
+                      {isOwner ? (
+                        <button
+                          onClick={() => setConfirmDelete(true)}
+                          className="favorite-toggle danger"
+                        >
+                          Delete
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="p-1 pl-0 sm:pb-0 break-words text-ellipsis overflow-hidden w-full text-slate-600">
-                      {item?.description}
-                  </p>
+                  {isEditing ? (
+                    <div className="space-y-2 mt-2 w-full">
+                      <input value={editTitle} onChange={(e)=>setEditTitle(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2" placeholder="Title"/>
+                      <input value={editCategory} onChange={(e)=>setEditCategory(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2" placeholder="Category"/>
+                      <input value={editPrice} onChange={(e)=>setEditPrice(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2" placeholder="Price"/>
+                      <textarea value={editDescription} onChange={(e)=>setEditDescription(e.target.value)} className="w-full border border-slate-300 rounded-lg p-2" placeholder="Description"/>
+                      <div className="flex gap-2">
+                        <button className="xchange-btn" onClick={saveEdits}>Save changes</button>
+                        <button className="xchange-btn ghost" onClick={()=>setIsEditing(false)}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="p-1 pl-0 sm:pb-0 break-words text-ellipsis overflow-hidden w-full text-slate-600">
+                        {currentDescription}
+                    </p>
+                  )}
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button className="xchange-btn" onClick={() => {
                       if (!user) { toggleModal(); return }
@@ -178,7 +255,7 @@ const Details = () => {
                     </div>
                     <div className="detail-card">
                       <p className="detail-title">Category</p>
-                      <p className="detail-value">{item?.category}</p>
+                      <p className="detail-value">{currentCategory}</p>
                     </div>
                   </div>
                   <div className="mt-6 safety-card">
@@ -284,6 +361,33 @@ const Details = () => {
               viewMode="grid"
               compact
             />
+          ) : null}
+
+          {confirmDelete ? (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl p-6 w-80 shadow-2xl text-slate-900">
+                <p className="text-lg font-semibold">Delete this item?</p>
+                <p className="text-sm text-slate-600 mt-2">This will remove it from Xchange for everyone.</p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button className="favorite-toggle ghost" onClick={() => setConfirmDelete(false)}>Cancel</button>
+                  <button
+                    className="favorite-toggle danger"
+                    onClick={async () => {
+                      try {
+                        await deleteDoc(doc(fireStore, 'products', item.id))
+                        itemsCtx.setItems((prev) => (prev || []).filter((it) => it.id !== item.id))
+                        setConfirmDelete(false)
+                        window.history.back()
+                      } catch (err) {
+                        console.error(err)
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : null}
 
           <ChatModal open={openChat} onClose={() => setOpenChat(false)} item={item} user={user} />

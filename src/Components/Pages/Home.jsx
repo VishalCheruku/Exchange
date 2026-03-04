@@ -4,6 +4,9 @@ import Login from '../Modal/Login'
 import Sell from '../Modal/Sell'
 import Card from '../Card/Card'
 import { ItemsContext } from '../Context/Item'
+import { auth, fireStore } from '../Firebase/Firebase'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { deleteDoc, doc } from 'firebase/firestore'
 
 
 const Home = () => {
@@ -17,6 +20,8 @@ const Home = () => {
   const [maxPrice, setMaxPrice] = useState('')
   const [showFavorites, setShowFavorites] = useState(false)
   const [viewMode, setViewMode] = useState('grid')
+  const [favModal, setFavModal] = useState(false)
+  const [user] = useAuthState(auth)
 
   const toggleModal = ()=>{setModal(!openModal)}
   const toggleModalSell = () => {setModalSell(!openModalSell)}
@@ -64,6 +69,10 @@ const Home = () => {
   }
 
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
+  const favoriteItems = useMemo(() => {
+    const items = itemsCtx.items || []
+    return items.filter((it) => favoriteSet.has(it.id))
+  }, [itemsCtx.items, favoriteSet])
 
   const toggleFavorite = (item) => {
     if (!item?.id) return
@@ -274,8 +283,8 @@ const Home = () => {
               <button onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'active' : ''}>List</button>
             </div>
           </div>
-          <button onClick={() => setShowFavorites((prev) => !prev)} className={`favorite-toggle ${showFavorites ? 'active' : ''}`}>
-            {showFavorites ? 'Showing favorites' : 'Show favorites'}
+          <button onClick={() => setFavModal(true)} className="favorite-toggle">
+            View favorites
           </button>
         </div>
       </div>
@@ -307,8 +316,47 @@ const Home = () => {
         favorites={favoriteSet}
         onToggleFavorite={toggleFavorite}
         onViewItem={trackRecent}
+        canDelete={(item) => user && item.userId === user.uid}
+        onDelete={async (item) => {
+          try {
+            await deleteDoc(doc(fireStore, 'products', item.id))
+            itemsCtx.setItems((prev) => (prev || []).filter((it) => it.id !== item.id))
+          } catch (err) {
+            console.error(err)
+          }
+        }}
         emptyMessage="No listings match your filters yet. Try loosening the price range or search."
       />
+
+      {favModal && (
+        <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[80vh] overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <div>
+                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Favorites</p>
+                <p className="text-xl font-bold text-slate-900">{favoriteItems.length} item{favoriteItems.length === 1 ? '' : 's'}</p>
+              </div>
+              <button className="favorite-toggle ghost" onClick={() => setFavModal(false)}>Close</button>
+            </div>
+            <div className="p-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 overflow-auto" style={{ maxHeight: '70vh' }}>
+              {favoriteItems.length === 0 ? (
+                <p className="text-slate-500">No favorites yet.</p>
+              ) : favoriteItems.map((it) => (
+                <div key={it.id} className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition">
+                  <div className="h-32 bg-slate-100 flex items-center justify-center overflow-hidden">
+                    <img src={it.imageUrl || 'https://via.placeholder.com/150'} alt={it.title} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="p-3 text-left">
+                    <p className="text-sm text-slate-500 uppercase tracking-wide">{it.category}</p>
+                    <p className="font-semibold text-slate-900 line-clamp-2">{it.title}</p>
+                    <p className="text-slate-700 font-bold mt-1">Rs {it.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

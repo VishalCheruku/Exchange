@@ -5,6 +5,9 @@ import Card from '../Card/Card'
 import { ItemsContext } from '../Context/Item'
 import Login from '../Modal/Login'
 import Sell from '../Modal/Sell'
+import { auth, fireStore } from '../Firebase/Firebase'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { deleteDoc, doc } from 'firebase/firestore'
 
 const Category = () => {
   const { name } = useParams()
@@ -12,6 +15,7 @@ const Category = () => {
   const itemsCtx = ItemsContext()
   const [openModal, setModal] = useState(false)
   const [openModalSell, setModalSell] = useState(false)
+  const [user] = useAuthState(auth)
 
   const toggleModal = () => setModal((prev) => !prev)
   const toggleModalSell = () => setModalSell((prev) => !prev)
@@ -125,6 +129,15 @@ const Category = () => {
           title={`${categoryName} picks`}
           subtitle={`Showing ${items.length} listing${items.length === 1 ? '' : 's'}.`}
           emptyMessage={`No listings found in ${categoryName} yet.`}
+          canDelete={(item) => user && item.userId === user.uid}
+          onDelete={async (item) => {
+            try {
+              await deleteDoc(doc(fireStore, 'products', item.id))
+              itemsCtx.setItems((prev) => (prev || []).filter((it) => it.id !== item.id))
+            } catch (err) {
+              console.error(err)
+            }
+          }}
         />
       </div>
     </div>

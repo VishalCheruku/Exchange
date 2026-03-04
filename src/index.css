@@ -189,6 +189,12 @@
     color: #0b1113;
   }
 
+  .favorite-toggle.danger {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #b91c1c;
+    background: rgba(254, 226, 226, 0.6);
+  }
+
   .section-header {
     display: flex;
     justify-content: space-between;

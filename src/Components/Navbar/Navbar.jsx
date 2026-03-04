@@ -28,7 +28,7 @@ const Navbar = (props) => {
         locationQuery = '',
         onLocationChange = () => {},
     } = props
-    const categories = ['Cars','Books','Houses','Bikes','Sports','Furniture','Electronics']
+    const categories = ['Cars','Books','Houses','Bikes','Sports','Furniture','Electronics','Trending']
 
     useEffect(() => {
       if (!menuOpen) return
@@ -95,6 +95,7 @@ const Navbar = (props) => {
         await signOut(auth)
         setMenuOpen(false)
         navigate('/')
+        alert('Logged out successfully.')
       } catch (err) {
         console.error('Logout failed', err)
       }
